@@ -1,0 +1,39 @@
+# dev environment
+name: React application deploy
+
+on:
+  push:
+    branches: [ "master" ]
+ 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.18.0]
+    steps:
+      - name: Checkout the Files
+        uses: actions/checkout@v2
+      - name: Copy files to folder
+        uses: appleboy/scp-action@master
+        with:
+          host: 194.233.75.156  # Corrected IP address
+          username: ubuntu
+          password: ${{ secrets.passwd }}
+          source: "*"
+          target: "~/frontend/"
+          rm: true
+      - name: SSH Remote Commands
+        uses: appleboy/ssh-action@v0.1.4
+        with:
+          host: 194.233.75.156  # Corrected IP address
+          username: ubuntu
+          password: ${{ secrets.passwd }}
+          port: 22
+          script: |
+            cd ~/frontend/
+            npm install
+            # node server
+            pm2 delete frontend 
+            pm2 start server.js --name "frontend"
+            pm2 save
