@@ -27,7 +27,7 @@ jobs:
         uses: appleboy/ssh-action@v0.1.4
         with:
           host: 194.233.75.156  # Corrected IP address
-          username: ubuntu
+          username: admin
           password: ${{ secrets.passwd }}
           port: 22
           script: |
