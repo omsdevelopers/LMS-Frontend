@@ -25,14 +25,6 @@ jobs:
           target: "~/frontend/"
           rm: true
 
-      - name: Install Dependencies
-        uses: actions/setup-node@v4
-        with:
-          node-version: '16'
-      - run: npm install
-      - run: yarn add jsvectormap/dist/maps/us-merc-en.js
-      - run: npm install -g pm2
-
       - name: SSH Remote Commands
         uses: appleboy/ssh-action@v0.1.4
         with:
@@ -43,10 +35,15 @@ jobs:
           script: |
             cd ~/frontend/
 
-            # Build the React application
+            # Install dependencies with npm install and print the output
+            echo "Installing dependencies..."
+            npm install
+
+            # Build the React application with npm run build and print the output
+            echo "Building the React application..."
             npm run build
 
             # Start the application using pm2
-            pm2 delete frontend || true
+            pm2 delete frontend
             pm2 start serve -n -s build -l 35000 --name "frontend"
             pm2 save
