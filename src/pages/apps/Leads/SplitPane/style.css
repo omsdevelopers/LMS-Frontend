@@ -89,3 +89,13 @@
   .active-row {
     background-color: #e0e0e0; 
   }
+
+
+  @media (max-width: 767px) {
+    .split-panel{
+      flex-direction: column;
+      height: auto;
+      width: 300%;
+    }
+  }
+  

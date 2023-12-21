@@ -53,8 +53,8 @@ const setAuthorization = (token: string | null) => {
 };
 
 const getUserFromCookie = () => {
-    const user = sessionStorage.getItem(AUTH_SESSION_KEY);
-    return user ? (typeof user == 'object' ? user : JSON.parse(user)) : null;
+    const user = localStorage.getItem(AUTH_SESSION_KEY);
+    return user ? (typeof user === 'object' ? user : JSON.parse(user)) : null;
 };
 class APICore {
     /**
@@ -113,9 +113,6 @@ class APICore {
     create = async(url: string, data: any) => {
 
         const res =  await axios.post(url, data);
-
-        console.log("fd", res)
-
         return res
 
     };
@@ -195,11 +192,13 @@ class APICore {
     };
 
     setLoggedInUser = (session: any) => {
-        if (session) sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
-        else {
-            sessionStorage.removeItem(AUTH_SESSION_KEY);
+        if (session) {
+            localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(session));
+        } else {
+            localStorage.removeItem(AUTH_SESSION_KEY);
         }
     };
+    
     /**
      * Returns the logged in user
      */

@@ -1,5 +1,5 @@
 const config = {
-    API_URL: "https://webgoindia.com/public/api",
+    API_URL: "http://leadmanagement.test/api",
 };
 
 export default config;

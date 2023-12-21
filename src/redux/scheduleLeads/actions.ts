@@ -5,23 +5,28 @@ export const setScheduleLeadCount = (leadCount: any) => ({
   payload: leadCount,
 });
 
-export const fetchScheduleLeadCount = (categories?: any[], date?: any) => ({
+export const fetchScheduleLeadCount = (
+  categories?: any[],
+  date?: any,
+  tags?: string[]
+) => ({
   type: LeadsActionTypes.FETCH_SCHEDULE_LEAD_COUNT,
-  payload: { categories, date },
+  payload: { categories, date, tags },
 });
-
-
 
 export const setScheduleLeads = (leads: any) => ({
   type: LeadsActionTypes.SET_SCHEDULE_LEAD,
   payload: leads,
 });
 
-export const fetchScheduleLeads = (categories?: any[], date?: any) => ({
+export const fetchScheduleLeads = (
+  categories?: any[],
+  date?: any,
+  tags?: string[]
+) => ({
   type: LeadsActionTypes.FETCH_SCHEDULE_LEAD,
-  payload: { categories, date },
+  payload: { categories, date, tags },
 });
-
 
 export const fetchScheduleLeadSuccess = () => ({
   type: LeadsActionTypes.FETCH_LEAD_SUCCESS,

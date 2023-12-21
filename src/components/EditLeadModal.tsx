@@ -67,7 +67,7 @@ function EditLeadModal(props: { ModalShow: boolean, onModalClose: any, leadData:
             dispatch(fetchLeadCount());
             dispatch(fetchLeads());
             props.onModalClose();
-
+            window.location.reload()
         } catch (error: any) {
             console.log(error)
             if (error) {

@@ -18,7 +18,7 @@ interface FormData {
 }
 
 const api = axios.create({
-  baseURL: "https://webgoindia.com/public/api",
+  baseURL: "http://leadmanagement.test/api",
 });
 
 export const leadGeneration = async (formData: FormData): Promise<any> => {
@@ -255,12 +255,17 @@ export const leadCategoryUpdate = async (
   }
 };
 
-export const scheduledLeads = async (category?: string[], date?: any) => {
+export const scheduledLeads = async (
+  category?: string[],
+  date?: any,
+  tags?: string[]
+) => {
   try {
     const { data } = await api.get("/scheduled_lead", {
       params: {
         category,
         date: date,
+        tags
       },
     });
     return data;

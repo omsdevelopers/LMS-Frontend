@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import SplitPane from "react-split-pane";
 import "../SplitPane/style.css";
-import { listLeads, leadByID, leadSchedule, leadCategoryUpdate, leadCount, scheduleLeadByID } from '../../../../helpers/api/api';
+import { listLeads, leadByID, leadSchedule, leadCategoryUpdate, leadCount, scheduleLeadByID, leadTagUpdate } from '../../../../helpers/api/api';
 import { Table, Row, Col, Form, Button, Offcanvas } from 'react-bootstrap';
 import Lottie from 'react-lottie-player'
 import lottieJson from '../SplitPane/JSON/empty.json'
@@ -58,6 +58,8 @@ function Index() {
     const [perLead, setPerLead] = useState<Lead | Record<string, never>>({});
     const [loading, setLoading] = useState<boolean>(false);
     const [activeRow, setActiveRow] = useState(null);
+    const [searchName, setSearchName] = useState("");
+    const [searchDate, setSearchDate] = useState("");
 
     const handleDrag = (e: any) => {
         document.addEventListener('mousemove', handleMouseMove);
@@ -107,8 +109,12 @@ function Index() {
     };
 
     const handleCall = (phone: any) => {
+        const telLink = document.createElement('a');
+        telLink.href = `tel:${phone}`;
+        telLink.click();
         console.log(`Calling ${phone}`);
     };
+
 
     const fetchLeadById = async (id: number) => {
         try {
@@ -142,6 +148,41 @@ function Index() {
     };
 
     const categories = ['New Lead', 'Following', 'Important', 'Ready Lead', 'Converted', 'Not Serious', 'Silent', 'Unwanted', 'For Job', 'Not Sale'];
+
+    //Tags
+    const [selectedTags, setSelectedTags] = useState<any[]>([]);
+
+    const handleTags = async (tag: string) => {
+        const isTagSelected = selectedTags.includes(tag);
+
+        const updatedTags = isTagSelected
+            ? selectedTags.filter((selectedTag) => selectedTag !== tag)
+            : [...selectedTags, tag];
+        setSelectedTags(updatedTags);
+
+
+        try {
+            const data = await leadTagUpdate(perLead?.id, updatedTags)
+            listAll()
+            toast.success(data);
+        } catch (error: any) {
+            console.log(error)
+            toast.error(error);
+        }
+    };
+
+    const tags = [
+        'Quotation',
+        'Send Detail',
+        'Immediate Sale',
+        'Sale',
+        'Low Priority',
+        'Dynamic',
+        'Ecommerce',
+        'Static',
+        'Mobile App'
+    ];
+
     //schedule 
     const [selectedTime, setSelectedTime] = useState('');
     const currentDate = moment();
@@ -155,7 +196,12 @@ function Index() {
         return options;
     };
 
-    const handleTimeChange = (event: any) => {
+    const handleTimeChange = (e: any) => {
+        if (e.target.name === 'hours') {
+            setHoursValue(e.target.value);
+        } else if (e.target.name === 'minutes') {
+            setMinutesValue(e.target.value);
+        }
         console.log("current", currentDate.format('MMM D, YYYY'));
         const hoursValue = (document.getElementById('hours') as HTMLSelectElement)?.value;
         const minutesValue = (document.getElementById('minutes') as HTMLSelectElement)?.value;
@@ -178,7 +224,12 @@ function Index() {
         const formattedTime = selectedDateTime.format('DD/MMM/YYYY h:mmA');
 
         setSelectedTime(formattedTime);
+
+
     };
+
+    const [hoursValue, setHoursValue] = useState('');
+    const [minutesValue, setMinutesValue] = useState('');
 
     const handleSchedule = async () => {
         try {
@@ -191,6 +242,10 @@ function Index() {
 
             const data1 = await scheduleLeadByID(perLead?.id);
             setPerLead(data1)
+            setMinutesValue('');
+            setSelectedTime('')
+            setSelectedTime('')
+
         } catch (e: any) {
             toast.error(e)
         }
@@ -201,6 +256,7 @@ function Index() {
     const [show, setShow] = useState<boolean>(false);
     const [selectedDate, setSelectedDate] = useState('');
     const [selectedFilterCategory, setSelectedFilterCategory] = useState<any[]>([]);
+    const [selectedFilerTags, setSelectedFilterTags] = useState<any[]>([]);
 
 
     const toggle = () => {
@@ -217,6 +273,16 @@ function Index() {
         setSelectedFilterCategory(updatedCategories);
     };
 
+    const handleFilterTags = async (tag: string) => {
+        const isTagSelected = selectedFilerTags.includes(tag);
+
+        const updatedTags = isTagSelected
+            ? selectedFilerTags.filter((selectedTag) => selectedTag !== tag)
+            : [...selectedFilerTags, tag];
+
+        setSelectedFilterTags(updatedTags);
+    };
+
     const handleDateChange = (date: any) => {
         console.log("from date handle", date)
         setSelectedDate(date ? date : '');
@@ -227,9 +293,9 @@ function Index() {
             const formattedDate = selectedDate ? moment(selectedDate).format('DD/MM/YYYY') : null;
             setLoading(true)
             // const data = await listLeads(selectedFilterCategory, formattedDate);
-            dispatch(fetchScheduleLeads(selectedFilterCategory, formattedDate));
+            dispatch(fetchScheduleLeads(selectedFilterCategory, formattedDate, selectedFilerTags ));
 
-            dispatch(fetchScheduleLeadCount(selectedFilterCategory, formattedDate));
+            dispatch(fetchScheduleLeadCount(selectedFilterCategory, formattedDate, selectedFilerTags));
             setLoading(false)
             // setSelectedFilterCategory([])
             setSelectedDate('')
@@ -279,8 +345,37 @@ function Index() {
                 <div className="panel-content" style={{ overflowY: 'auto' }}>
                     <div className="table-container">
 
-                        <Button className={`btn-sm `} variant="outline-primary" onClick={toggle} style={{ marginBottom: '3px', float: "right" }}>
-                            <FeatherIcon icon='filter' className="icon-dual icon-xs me-1" /> Filter</Button>
+                        <Form>
+                            <Row className="mb-3">
+                                <Col>
+                                    <Form.Group controlId="formName">
+                                        {/* <Form.Label>Search by Name:</Form.Label> */}
+                                        <Form.Control
+                                            type="text"
+                                            placeholder="Enter name or phone"
+                                            value={searchName}
+                                            onChange={(e) => setSearchName(e.target.value)}
+                                        />
+                                    </Form.Group>
+                                </Col>
+                                <Col>
+                                    <Form.Group controlId="formDate">
+                                        {/* <Form.Label>Search by Date:</Form.Label> */}
+                                        <Form.Control
+                                            type="date"
+                                            value={searchDate}
+                                            onChange={(e) => setSearchDate(e.target.value)}
+                                        />
+                                    </Form.Group>
+                                </Col>
+
+                                <Col>
+                                    <Button className={``} variant="outline-primary" onClick={toggle} style={{ marginBottom: '3px', float: "right" }}>
+                                        <FeatherIcon icon='filter' className="icon-dual icon-xs me-1" /> Filter
+                                    </Button>
+                                </Col>
+                            </Row>
+                        </Form>
 
                         <Offcanvas show={show} onHide={toggle} placement="end" >
                             <Offcanvas.Header closeButton>
@@ -301,6 +396,28 @@ function Index() {
                                                         style={{ margin: '5px' }}
                                                     >
                                                         {category}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <br></br>
+                                        </div>
+                                    </Col>
+                                </Row>
+
+                                <Row>
+                                    <Col>
+                                        <div>
+                                            <strong>Tags:</strong>
+                                            <div className="btn-group" style={{ display: "flex", flexWrap: "wrap" }}>
+                                                {tags.map((tag) => (
+                                                    <button
+                                                        key={tag}
+                                                        type="button"
+                                                        className={`btn ${selectedFilerTags.includes(tag) ? 'btn-success' : 'btn-primary'} btn-sm`}
+                                                        onClick={() => handleFilterTags(tag)}
+                                                        style={{ margin: '5px' }}
+                                                    >
+                                                        {tag}
                                                     </button>
                                                 ))}
                                             </div>
@@ -345,7 +462,7 @@ function Index() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {reduxloading ? (
+                                {loading ? (
                                     <>
                                         <Spinner className="m-2" color={'info'}>
                                             <span className="visually-hidden">Loading...</span>
@@ -354,7 +471,22 @@ function Index() {
                                 ) : (
                                     <>
                                         {leads && leads.length > 0 ? (
-                                            leads.map((lead, index) => {
+                                            leads
+                                                .filter((lead) => {
+                                                    const lowerCaseSearch = searchName.toLowerCase();
+                                                    return (
+                                                        lead.name.toLowerCase().includes(lowerCaseSearch) ||
+                                                        lead.phone.includes(lowerCaseSearch)
+                                                    );
+                                                })
+                                                .filter((lead) => {
+                                                    if (searchDate) {
+                                                        const leadDate = new Date(lead.created_at).toISOString().split('T')[0];
+                                                        return leadDate === searchDate;
+                                                    }
+                                                    return true;
+                                                })
+                                                .map((lead, index) => {
                                                 const remainingTime: any = remainingTimes[index];
 
                                                 // if (!remainingTime) {
@@ -374,7 +506,7 @@ function Index() {
                                                         <td style={{ color: "red" }}>
                                                             {remainingTime ? (
                                                                 <>
-                                                                    {remainingTime.hours} hours {remainingTime.minutes} minutes {remainingTime.seconds} seconds remaining
+                                                                    {remainingTime.hours} h {remainingTime.minutes} m {remainingTime.seconds} s left
                                                                 </>
                                                             ) : (
                                                                 <Skeleton />
@@ -498,6 +630,32 @@ function Index() {
                                 </Col>
                             </Row>
 
+                            <Row>
+                                <Col>
+                                    <div>
+                                        <strong>Tags:</strong>
+
+                                        <div className="btn-group" style={{ display: "flex", flexWrap: "wrap" }}>
+                                            {tags.map((tag) => (
+                                                <button
+                                                    key={tag}
+                                                    type="button"
+                                                    className={`btn ${perLead.tags && perLead.tags.includes(tag) || selectedTags?.includes(tag) ? 'btn-success' : 'btn-primary'} btn-sm`}
+
+                                                    onClick={() => handleTags(tag)}
+                                                    style={{ margin: '5px' }}
+                                                >
+                                                    {tag}
+                                                </button>
+                                            ))}
+                                        </div>
+
+
+                                        <br></br>
+                                    </div>
+                                </Col>
+                            </Row>
+
                             <Row style={{ marginTop: "10px", alignItems: "center" }}>
                                 <Col>
                                     <div>
@@ -507,6 +665,7 @@ function Index() {
                                                 style={{ marginRight: '5px' }}
                                                 id="hours"
                                                 name="hours"
+                                                value={hoursValue}
                                                 onChange={handleTimeChange}
                                             >
                                                 {generateOptions(0, 23)}
@@ -515,6 +674,7 @@ function Index() {
                                                 style={{ marginRight: '5px' }}
                                                 id="minutes"
                                                 name="minutes"
+                                                value={minutesValue}
                                                 onChange={handleTimeChange}
                                             >
                                                 {generateOptions(0, 59)}

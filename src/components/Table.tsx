@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, forwardRef, useState } from 'react';
+import React, { useRef, useEffect, forwardRef, useState, useCallback, useMemo } from 'react';
 import {
     useTable,
     useSortBy,
@@ -9,9 +9,16 @@ import {
     useExpanded,
 } from 'react-table';
 import classNames from 'classnames';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 
 // components
 import Pagination from './Pagination';
+import toast from 'react-hot-toast';
+import { useDispatch, useSelector } from 'react-redux';
+import { leadByID, leadDelete, tableList } from '../helpers/api/api';
+import { fetchLeadCount, fetchLeads } from '../redux/actions';
+import { RootState } from '../redux/store';
+import EditLeadModal from './EditLeadModal';
 
 interface GlobalFilterProps {
     preGlobalFilteredRows: any;
@@ -42,7 +49,10 @@ const GlobalFilter = ({ preGlobalFilteredRows, globalFilter, setGlobalFilter, se
                     placeholder={`${count} records...`}
                     className="form-control w-auto ms-1"
                 />
+
+                
             </span>
+            
         </div>
     );
 };
@@ -96,6 +106,7 @@ interface TableProps {
     theadClass?: string;
 }
 
+
 const Table = (props: TableProps) => {
     const isSearchable = props['isSearchable'] || false;
     const isSortable = props['isSortable'] || false;
@@ -103,6 +114,10 @@ const Table = (props: TableProps) => {
     const isSelectable = props['isSelectable'] || false;
     const isExpandable = props['isExpandable'] || false;
     const sizePerPageList = props['sizePerPageList'] || [];
+
+    const dispatch = useDispatch()
+    const [data, setData] = useState([]);
+    const [leads, setLeads] = useState<any[]>();
 
     let otherProps: any = {};
 
@@ -122,10 +137,73 @@ const Table = (props: TableProps) => {
         otherProps['useRowSelect'] = useRowSelect;
     }
 
+    useEffect(() => {
+        // Fetch initial data when the component mounts
+        leadData();
+    }, []);
+
+    const leadData = async () => {
+        try {
+            const updatedData = await tableList()
+            setData(updatedData);
+
+        } catch (e) {
+            console.log(e)
+        }
+    }
+    const handleDelete = async (row: any) => {
+        try {
+            if (window.confirm("Are you sure you want to delete this lead?")) {
+                const data = await leadDelete(row?.row.values.id);
+            }
+            toast.success("Lead deleted successfully");
+            dispatch(fetchLeadCount());
+            leadData()
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
+    const [showModal, setShowModal] = useState(false);
+    const [editLeadData, setEditLeadData] = useState({});
+
+    const handleEdit = async (row: any) => {
+        console.log("row.row.values.id", row.row.values.id);
+
+        const data = await leadByID(row.row.values.id)
+
+        console.log("dds", data);
+        setEditLeadData(data);
+
+        setShowModal(true);
+    };
+
+    const handleModalClose = () => {
+        setShowModal(false);
+    };
+
+    const columns = useMemo(
+        () => [
+            // ... existing columns
+            ...props.columns,
+            {
+                Header: 'Actions',
+                Cell: (row: any) => (
+                    <div className="">
+                        <FaEdit className="action-icon" style={{ color: "blue", cursor: "pointer" }} onClick={() => handleEdit(row)} />
+
+                        <FaTrash className="action-icon" style={{ color: "red", cursor: "pointer" }} onClick={() => handleDelete(row)} />
+                    </div>
+                ),
+            },
+        ],
+        [props.columns]
+    );
+
     const dataTable = useTable(
         {
-            columns: props['columns'],
-            data: props['data'],
+            columns,
+            data: data ? data : props['data'],
             initialState: { pageSize: props['pageSize'] || 10 },
         },
         otherProps.hasOwnProperty('useGlobalFilter') && otherProps['useGlobalFilter'],
@@ -202,6 +280,7 @@ const Table = (props: TableProps) => {
             )}
 
             <div className="table-responsive">
+                <EditLeadModal ModalShow={showModal} onModalClose={handleModalClose} leadData={editLeadData} />
                 <table
                     {...dataTable.getTableProps()}
                     className={classNames('table table-centered react-table', props['tableClass'])}>

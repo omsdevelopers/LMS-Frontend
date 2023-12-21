@@ -102,9 +102,8 @@ const IntroCard = () => {
                 tags: '',
                 category: 'New Lead'
             });
-
             dispatch(fetchLeadCount());
-
+            window.location.reload();
 
         } catch (error: any) {
             console.log(error)
@@ -338,12 +337,9 @@ const CalendarApp = () => {
         }
     }
     useEffect(() => {
-
         leadData()
-        console.log("kl", data)
     }, [])
 
-    console.log("mm",datas)
 
 
     const sizePerPageList = [
@@ -391,11 +387,12 @@ const CalendarApp = () => {
 
                             <Table
                                 columns={columns}
-                                data={data ? data: datas}
+                                data={data ? data: []}
                                 pageSize={5}
                                 sizePerPageList={sizePerPageList}
                                 isSortable={true}
                                 pagination={true}
+                                isSearchable={true}
                             />
                         </Card.Body>
                     </Card>

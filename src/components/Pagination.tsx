@@ -104,7 +104,7 @@ const Pagination = ({ tableProps, sizePerPageList }: PaginationProps) => {
                 <span className="me-3">
                     Page{' '}
                     <strong>
-                        {pageIndex + 1} of {tableProps.pageOptions.length}
+                        {pageIndex + 1} of {tableProps.pageOptions?.length}
                     </strong>{' '}
                 </span>
 

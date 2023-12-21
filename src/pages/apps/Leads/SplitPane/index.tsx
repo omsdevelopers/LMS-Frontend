@@ -111,6 +111,9 @@ function Index() {
     };
 
     const handleCall = (phone: any) => {
+        const telLink = document.createElement('a');
+        telLink.href = `tel:${phone}`;
+        telLink.click();
         console.log(`Calling ${phone}`);
     };
 
@@ -209,10 +212,19 @@ function Index() {
         const daysToAdd = parseInt(selectedDay, 10) || 0; // Number of days to add
 
         // Create a Moment.js object with the current date and time
-        const selectedDateTime = moment(currentDate)
+        let selectedDateTime = moment(currentDate)
             .add(hoursToAdd, 'hours')
             .add(minutesToAdd, 'minutes')
-            .add(daysToAdd, 'days') // Add days to the current date
+            .add(daysToAdd, 'days'); // Add days to the current date
+
+        if (hoursToAdd === 0 && minutesToAdd == 0) {
+            selectedDateTime = moment(currentDate)
+                .set({
+                    hours: hoursToAdd,
+                    minutes: minutesToAdd,
+                })
+                .add(daysToAdd, 'days');
+        }
 
         console.log('Parsed Hours:', hoursToAdd);
         console.log('Parsed Minutes:', minutesToAdd);
@@ -222,6 +234,10 @@ function Index() {
 
         setSelectedTime(formattedTime);
     };
+
+
+    const [hoursValue, setHoursValue] = useState('');
+    const [minutesValue, setMinutesValue] = useState('');
 
     const handleSchedule = async (number?: number) => {
         try {
@@ -242,12 +258,8 @@ function Index() {
 
             const data = await leadSchedule(perLead?.id, selectedTime ? selectedTime : formattedDateTime)
 
-            console.log("hi", data)
-
-            console.log("date", formattedDate)
-
-
             toast.success(data)
+
             setSelectedTime('')
             dispatch(fetchLeads(selectedFilterCategory, formattedDate));
             // listAll()
@@ -319,44 +331,11 @@ function Index() {
     }
 
 
-    // lead edit and delete
-    const [showModal, setShowModal] = useState(false);
-    const [editLeadData, setEditLeadData] = useState({});
-
-    const handleEdit = async (id: number) => {
-        const lead = leads?.find((lead) => lead.id === id);
-
-        console.log("dd", lead)
-        setEditLeadData(lead);
-
-        setShowModal(true);
-
-    }
-
-    const handleModalClose = () => {
-        setShowModal(false);
-      };
-
-    const handleDelete = async (id: number) => {
-        try {
-            if (window.confirm("Are you sure you want to delete this lead?")) {
-                const data = await leadDelete(id);
-            }
-            toast.success("Lead deleted successfully");
-            dispatch(fetchLeads());
-
-            dispatch(fetchLeadCount());
-        } catch (e) {
-            console.log(e)
-        }
-    }
-
     return (
-        <div className="split-panel">
+        <div className="split-panel" >
             <div className="panel" style={{ width: `${leftPanelWidth}%` }}>
                 <div className="panel-content" style={{ overflowY: 'auto' }}>
                     <div className="table-container">
-                        <EditLeadModal ModalShow={showModal} onModalClose={handleModalClose} leadData={editLeadData}/>
                         <Form>
                             <Row className="mb-3">
                                 <Col>
@@ -364,7 +343,7 @@ function Index() {
                                         {/* <Form.Label>Search by Name:</Form.Label> */}
                                         <Form.Control
                                             type="text"
-                                            placeholder="Enter name"
+                                            placeholder="Enter name or phone"
                                             value={searchName}
                                             onChange={(e) => setSearchName(e.target.value)}
                                         />
@@ -471,8 +450,8 @@ function Index() {
                                 <tr>
                                     <th>Name</th>
                                     <th>Category</th>
+                                    <th>Phone</th>
                                     <th>Call</th>
-                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -490,10 +469,16 @@ function Index() {
                                     <>
                                         {leads && leads.length > 0 ? (
                                             leads
-                                                .filter((lead) => lead.name.toLowerCase().includes(searchName.toLowerCase()))
+                                                .filter((lead) => {
+                                                    const lowerCaseSearch = searchName.toLowerCase();
+                                                    return (
+                                                        lead.name.toLowerCase().includes(lowerCaseSearch) ||
+                                                        lead.phone.includes(lowerCaseSearch)
+                                                    );
+                                                })
                                                 .filter((lead) => {
                                                     if (searchDate) {
-                                                        const leadDate = new Date(lead.created_at).toISOString().split("T")[0];
+                                                        const leadDate = new Date(lead.created_at).toISOString().split('T')[0];
                                                         return leadDate === searchDate;
                                                     }
                                                     return true;
@@ -507,15 +492,11 @@ function Index() {
                                                             <a style={{ color: "blue" }}>{lead.name} - {convertToIST(lead.created_at)}</a>
                                                         </td>
                                                         <td>{lead.category}</td>
+                                                        <td>{lead.phone}</td>
                                                         <td>
-                                                            <button className="call-button" onClick={() => handleCall(lead.phone)}>
+                                                            <button className="call-button" onClick={() => handleCall(lead.phone)} data-tel={lead.phone}>
                                                                 Call
                                                             </button>
-                                                        </td>
-                                                        <td>
-                                                            <FaEdit className="action-icon" style={{ color: "blue", cursor: "pointer" }} onClick={() => handleEdit(lead.id)} />
-
-                                                            <FaTrash className="action-icon" style={{ color: "red", cursor: "pointer" }} onClick={() => handleDelete(lead.id)} />
                                                         </td>
                                                     </tr>
                                                 ))
@@ -538,7 +519,7 @@ function Index() {
                         <div style={{ overflowX: "hidden", marginTop: "2px" }}>
                             <Row>
                                 <Col>
-                                    <Table striped bordered hover>
+                                    <Table striped bordered hover responsive>
                                         <tbody>
                                             <tr>
                                                 <td><strong>Name:</strong></td>
