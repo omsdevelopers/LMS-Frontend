@@ -119,7 +119,7 @@ if (useMock) {
   axios.defaults.adapter = require("axios/lib/adapters/http"); // Use the actual adapter
   // configureFakeBackend();
   axios
-    .post("http://leadmanagement.test/api/login", {
+    .post("https://transindiapacker.com/public/api", {
       // Include your request data here
     })
     .then((response) => {

@@ -1,5 +1,5 @@
 const config = {
-    API_URL: "http://leadmanagement.test/api",
+    API_URL: "https://transindiapacker.com/public/api",
 };
 
 export default config;

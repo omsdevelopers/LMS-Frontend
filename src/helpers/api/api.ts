@@ -18,7 +18,7 @@ interface FormData {
 }
 
 const api = axios.create({
-  baseURL: "http://leadmanagement.test/api",
+  baseURL: "https://transindiapacker.com/public/api",
 });
 
 export const leadGeneration = async (formData: FormData): Promise<any> => {

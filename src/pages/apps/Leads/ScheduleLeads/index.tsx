@@ -99,6 +99,16 @@ function Index() {
         setLeads(Reduxleads);
     }, [Reduxleads]);
 
+    const refresh = async () => {
+        try {
+            // Set loading to true while fetching
+            dispatch({ type: LeadsActionTypes.SET_SCHEDULE_LEAD });
+            await dispatch(fetchScheduleLeads());
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
     const convertToIST = (utcDateString: any) => {
         const utcDate = new Date(utcDateString);
         const istOptions = {
@@ -293,7 +303,7 @@ function Index() {
             const formattedDate = selectedDate ? moment(selectedDate).format('DD/MM/YYYY') : null;
             setLoading(true)
             // const data = await listLeads(selectedFilterCategory, formattedDate);
-            dispatch(fetchScheduleLeads(selectedFilterCategory, formattedDate, selectedFilerTags ));
+            dispatch(fetchScheduleLeads(selectedFilterCategory, formattedDate, selectedFilerTags));
 
             dispatch(fetchScheduleLeadCount(selectedFilterCategory, formattedDate, selectedFilerTags));
             setLoading(false)
@@ -307,37 +317,38 @@ function Index() {
 
     const [remainingTimes, setRemainingTimes] = useState([]);
 
+    const updateRemainingTimes = () => {
+        const updatedRemainingTimes: any = leads?.map((lead) => {
+            const dateShedule = moment(lead.date_shedule, "DD/MMM/YYYY h:mmA", true);
+
+            if (!dateShedule.isValid() || dateShedule.isBefore(moment())) {
+                console.error(`Invalid or past date: ${lead.date_shedule}`);
+                return null;
+            }
+
+            const duration = moment.duration(dateShedule.diff(moment()));
+            const totalSeconds = Math.max(duration.asSeconds(), 0);
+            const elapsedSeconds = lead.category === "Ready Lead" ? 2 : 0;
+            const remainingSeconds = Math.max(totalSeconds - elapsedSeconds, 0);
+
+            return {
+                hours: Math.floor(remainingSeconds / 3600),
+                minutes: Math.floor((remainingSeconds % 3600) / 60),
+                seconds: Math.floor(remainingSeconds % 60),
+            };
+        });
+
+        setRemainingTimes(updatedRemainingTimes);
+    };
 
     useEffect(() => {
-        const updateRemainingTimes = () => {
-            const updatedRemainingTimes: any = leads?.map((lead) => {
-                const dateShedule = moment(lead.date_shedule, "DD/MMM/YYYY h:mmA", true);
+        updateRemainingTimes();
+    }, [leads]);
 
-                if (!dateShedule.isValid() || dateShedule.isBefore(moment())) {
-                    console.error(`Invalid or past date: ${lead.date_shedule}`);
-                    return null;
-                }
-
-                const duration = moment.duration(dateShedule.diff(moment()));
-                const totalSeconds = Math.max(duration.asSeconds(), 0);
-                const elapsedSeconds = (lead.category === "Ready Lead" ? 2 : 0);
-                const remainingSeconds = Math.max(totalSeconds - elapsedSeconds, 0);
-
-                return {
-                    hours: Math.floor(remainingSeconds / 3600),
-                    minutes: Math.floor((remainingSeconds % 3600) / 60),
-                    seconds: Math.floor(remainingSeconds % 60),
-                };
-            });
-
-            setRemainingTimes(updatedRemainingTimes);
-        };
-
-        const intervalId = setInterval(updateRemainingTimes, 1000);
-
-        return () => clearInterval(intervalId);
-    }, [leads]); // Add leads as a dependency to trigger the effect on leads change
-
+    // Store initial timestamp in localStorage
+    useEffect(() => {
+        localStorage.setItem('pageLoadTimestamp', new Date().toISOString());
+    }, []);
 
     return (
         <div className="split-panel">
@@ -368,7 +379,9 @@ function Index() {
                                         />
                                     </Form.Group>
                                 </Col>
-
+                                <Col>
+                                    <FeatherIcon onClick={refresh} icon='refresh-ccw' className="icon-dual icon-xs me-1" style={{marginTop:"10px", cursor:"pointer"}}/>
+                                </Col>
                                 <Col>
                                     <Button className={``} variant="outline-primary" onClick={toggle} style={{ marginBottom: '3px', float: "right" }}>
                                         <FeatherIcon icon='filter' className="icon-dual icon-xs me-1" /> Filter
@@ -487,40 +500,40 @@ function Index() {
                                                     return true;
                                                 })
                                                 .map((lead, index) => {
-                                                const remainingTime: any = remainingTimes[index];
+                                                    const remainingTime: any = remainingTimes && remainingTimes[index];
 
-                                                // if (!remainingTime) {
-                                                //     return null
-                                                // }
+                                                    // if (!remainingTime) {
+                                                    //     return null
+                                                    // }
 
-                                                return (
-                                                    <tr key={lead.id} className={activeRow === lead.id ? 'active-row' : ''}>
-                                                        <td style={{ textTransform: "capitalize", cursor: "pointer" }}
-                                                            onClick={() => {
-                                                                fetchLeadById(lead.id);
-                                                                setActiveRow(lead.id === activeRow ? null : lead.id);
-                                                            }}
-                                                        >
-                                                            <a style={{ color: "blue" }}>{lead.name} - {convertToIST(lead.created_at)}</a>
-                                                        </td>
-                                                        <td style={{ color: "red" }}>
-                                                            {remainingTime ? (
-                                                                <>
-                                                                    {remainingTime.hours} h {remainingTime.minutes} m {remainingTime.seconds} s left
-                                                                </>
-                                                            ) : (
-                                                                <Skeleton />
-                                                            )}
-                                                        </td>
-                                                        <td>{lead.category}</td>
-                                                        <td>
-                                                            <button className="call-button" onClick={() => handleCall(lead.phone)}>
-                                                                Call
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })
+                                                    return (
+                                                        <tr key={lead.id} className={activeRow === lead.id ? 'active-row' : ''}>
+                                                            <td style={{ textTransform: "capitalize", cursor: "pointer" }}
+                                                                onClick={() => {
+                                                                    fetchLeadById(lead.id);
+                                                                    setActiveRow(lead.id === activeRow ? null : lead.id);
+                                                                }}
+                                                            >
+                                                                <a style={{ color: "blue" }}>{lead.name} - {convertToIST(lead.created_at)}</a>
+                                                            </td>
+                                                            <td style={{ color: "red" }}>
+                                                                {remainingTime ? (
+                                                                    <>
+                                                                        {remainingTime.hours} h {remainingTime.minutes} m {remainingTime.seconds} s left
+                                                                    </>
+                                                                ) : (
+                                                                    <Skeleton />
+                                                                )}
+                                                            </td>
+                                                            <td>{lead.category}</td>
+                                                            <td>
+                                                                <button className="call-button" onClick={() => handleCall(lead.phone)}>
+                                                                    Call
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
                                         ) : (
                                             <tr>
                                                 <td colSpan={3}>No leads available</td>
