@@ -35,6 +35,7 @@ const MENU_ITEMS: MenuItemTypes[] = [
     // ],
   },
   { key: "leads", label: "APPS", isTitle: true },
+  
   {
     key: "apps-add-leads",
     label: "Add Leads",
@@ -42,7 +43,23 @@ const MENU_ITEMS: MenuItemTypes[] = [
     icon: "shopping-bag",
     url: "/apps/add-leads",
   },
-  
+
+  {
+    key: "apps-add-tags",
+    label: "Add Tags",
+    isTitle: false,
+    icon: "hash",
+    url: "/apps/create-tags",
+  },
+
+  {
+    key: "apps-all-leads",
+    label: "All Leads",
+    isTitle: false,
+    icon: "layers",
+    url: "/apps/all-leads",
+  },
+
   {
     key: "apps-today-leads",
     label: "Today Leads",
@@ -58,6 +75,24 @@ const MENU_ITEMS: MenuItemTypes[] = [
     icon: "calendar",
     url: "/apps/schedule-leads",
   },
+
+  {
+    key: "apps-grouped-leads",
+    label: "Grouped Leads",
+    isTitle: false,
+    icon: "book-open",
+    url: "/apps/group-leads",
+  },
+
+  {
+    key: "apps-activity-leads",
+    label: "Activity",
+    isTitle: false,
+    icon: "bar-chart",
+    url: "/apps/activity",
+  },
+
+
   // {
   //     key: 'apps-chat',
   //     label: 'Chat',

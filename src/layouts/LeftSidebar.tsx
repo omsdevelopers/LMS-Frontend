@@ -15,7 +15,7 @@ import profileImg from '../assets/images/users/avatar-1.jpg';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchLeadCount, setLeadCount } from '../redux/leads/actions';
 import { RootState } from '../redux/store';
-import { fetchScheduleLeadCount } from '../redux/actions';
+import { fetchEveryLeadCount, fetchScheduleLeadCount } from '../redux/actions';
 
 /* user box */
 const UserBox = () => {
@@ -97,20 +97,23 @@ const SideBarContent = () => {
     useEffect(() => {
         dispatch(fetchLeadCount());
         dispatch(fetchScheduleLeadCount());
+        dispatch(fetchEveryLeadCount());
     }, [dispatch]);
 
     const leadsState = useSelector((state: RootState) => state.leadsReducer?.leadsCount);
     const scheduleLeadsState = useSelector((state: RootState) => state.leadsScheduleReducer?.leadsCount);
+    const everyLeadsState = useSelector((state: RootState) => state.everyLeadsReducer?.leadsCount);
 
     const [leadCount, setLeadCount] = useState<string>('02');
     const [scheduleCount, setScheduleLeadCount] = useState<string>('0');
+    const [everyCount, setEveryLeadCount] = useState<string>('02');
 
-    const [menuItems, setMenuItems] = useState(getMenuItems(leadCount, scheduleCount));
+    const [menuItems, setMenuItems] = useState(getMenuItems(leadCount, scheduleCount, everyCount));
 
     useEffect(() => {
-        setMenuItems(getMenuItems(leadsState, scheduleLeadsState));
-    }, [leadsState, scheduleLeadsState]);
-
+        setMenuItems(getMenuItems(leadsState, scheduleLeadsState, everyLeadsState ));
+    }, [leadsState, scheduleLeadsState,  everyLeadsState]);
+    
     return (
         <>
             <UserBox />

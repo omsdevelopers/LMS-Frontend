@@ -15,7 +15,7 @@ import { records as datas, expandableRecords } from '../../tables/data';
 import { leadGeneration } from '../../../helpers/api/api';
 import { tableList } from '../../../helpers/api/api';
 import { useDispatch } from 'react-redux';
-import { fetchLeadCount } from '../../../redux/actions';
+import { fetchLeadCount, fetchEveryLeads, fetchEveryLeadCount } from '../../../redux/actions';
 
 const columns = [
     {
@@ -103,6 +103,8 @@ const IntroCard = () => {
                 category: 'New Lead'
             });
             dispatch(fetchLeadCount());
+            dispatch(fetchEveryLeadCount());
+
             window.location.reload();
 
         } catch (error: any) {
@@ -325,7 +327,6 @@ const CalendarApp = () => {
 
     const [data, setData] = useState<any>();
 
-
     const leadData = async () => {
         try {
             const data = await tableList()
@@ -336,11 +337,10 @@ const CalendarApp = () => {
             console.log(e)
         }
     }
+
     useEffect(() => {
         leadData()
     }, [])
-
-
 
     const sizePerPageList = [
         {

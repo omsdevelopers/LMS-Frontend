@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import SplitPane from "react-split-pane";
 import "../SplitPane/style.css";
-import { listLeads, leadByID, leadSchedule, leadCategoryUpdate, leadCount, leadTagUpdate, leadDelete } from '../../../../helpers/api/api';
+import { listLeads, leadByID, leadSchedule, leadCategoryUpdate, leadCount, leadTagUpdate, leadDelete, everyLeads, getTags } from '../../../../helpers/api/api';
 import { Table, Row, Col, Form, Button, Offcanvas } from 'react-bootstrap';
 import Lottie from 'react-lottie-player'
 import lottieJson from '../SplitPane/JSON/empty.json'
@@ -9,7 +9,7 @@ import ChatList, { MessageItemTypes } from './ChatList';
 import Spinner from '../../../../components/Spinner';
 import moment from 'moment';
 import toast, { Toaster } from 'react-hot-toast';
-import { fetchLeadCount, fetchLeads, fetchScheduleLeadCount } from '../../../../redux/actions';
+import { fetchEveryLeadCount, fetchEveryLeads, fetchLeadCount, fetchLeads, fetchScheduleLeadCount } from '../../../../redux/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import FeatherIcon from 'feather-icons-react';
 import DatePicker from 'react-datepicker';
@@ -17,6 +17,7 @@ import { RootState } from '../../../../redux/store';
 import LeadsActionTypes from '../../../../redux/leads/constants';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import EditLeadModal from '../../../../components/EditLeadModal';
+import { WithContext as ReactTags } from 'react-tag-input';
 
 interface Comment {
     id: number;
@@ -46,6 +47,20 @@ interface Lead {
     comments: Comment[];
     created_at: string;
     updated_at: string;
+}
+
+interface Tag {
+    id: string;
+    text: string;
+}
+
+interface Lead {
+    id: number;
+    tags: string[];
+}
+
+interface Props {
+    perLead: Lead | null;
 }
 
 
@@ -84,6 +99,7 @@ function Index() {
             // const data = await listLeads();
             dispatch({ type: LeadsActionTypes.FETCH_LEAD });
             await dispatch(fetchLeads());
+            await dispatch(fetchEveryLeadCount());
 
             // setLeads(data.leads)
             setLoading(false)
@@ -120,12 +136,12 @@ function Index() {
     const fetchLeadById = async (id: number) => {
         try {
             const data = await leadByID(id);
-            setPerLead(data)
+
+            setPerLead(prevPerLead => ({ ...prevPerLead, ...data }));
         } catch (e) {
             console.log(e)
         }
     }
-
 
 
     //category
@@ -172,17 +188,25 @@ function Index() {
         }
     };
 
-    const tags = [
-        'Quotation',
-        'Send Detail',
-        'Immediate Sale',
-        'Sale',
-        'Low Priority',
-        'Dynamic',
-        'Ecommerce',
-        'Static',
-        'Mobile App'
-    ];
+    //get tags 
+
+    const [tagsFromAPI, setTagsFromAPI] = useState([]);
+
+    const AllTags = async () => {
+
+        try {
+            const tags = await getTags(1);
+            setTagsFromAPI(tags.tags)
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to load tag');
+        }
+    }
+
+    useMemo(() => {
+        AllTags();
+    }, []);
+
 
 
     //schedule 
@@ -239,6 +263,16 @@ function Index() {
     const [hoursValue, setHoursValue] = useState('');
     const [minutesValue, setMinutesValue] = useState('');
 
+    const fetchAllLeads: any = async () => {
+        try {
+            const allLeads: any = await everyLeads(); // Implement fetchAllLeads function to fetch all leads
+            return allLeads.leads.map((lead: { id: any; }) => lead.id);
+        } catch (error) {
+            console.error("Error fetching all leads:", error);
+            return [];
+        }
+    };
+
     const handleSchedule = async (number?: number) => {
         try {
 
@@ -262,12 +296,32 @@ function Index() {
 
             setSelectedTime('')
             dispatch(fetchLeads(selectedFilterCategory, formattedDate));
+            dispatch(fetchEveryLeadCount(selectedFilterCategory, formattedDate));
+
             // listAll()
             dispatch(fetchLeadCount(selectedFilterCategory, formattedDate));
             dispatch(fetchScheduleLeadCount(selectedFilterCategory, formattedDate));
 
-            const data1 = await leadByID(perLead?.id);
-            setPerLead(data1)
+            const allLeadIDs = await fetchAllLeads();
+            const currentIndex = allLeadIDs.indexOf(perLead?.id); // Get the index of the current lead's ID
+
+            if (currentIndex !== -1 && currentIndex < allLeadIDs.length - 1) {
+                // If the current lead's ID is found and it's not the last lead
+                const nextLeadID = allLeadIDs[currentIndex + 1]; // Get the ID after the current lead's ID
+                console.log("Next Lead ID:", nextLeadID);
+
+                try {
+                    const nextLeadData = await leadByID(nextLeadID); // Fetch the data of the next lead
+                    console.log("Next Lead Data:", nextLeadData);
+
+                    setPerLead(nextLeadData); // Set the next lead's data
+                    setActiveRow(nextLeadID); // Set the active row to the next lead's ID
+                } catch (error) {
+                    console.error("Error fetching next lead data:", error);
+                }
+            } else {
+                console.log("No next lead found or current lead is the last lead.");
+            }
         } catch (e: any) {
             toast.error(e)
         }
@@ -331,6 +385,7 @@ function Index() {
     }
 
 
+    console.log(":sda", leads)
     return (
         <div className="split-panel" >
             <div className="panel" style={{ width: `${leftPanelWidth}%` }}>
@@ -401,7 +456,7 @@ function Index() {
                                         <div>
                                             <strong>Tags:</strong>
                                             <div className="btn-group" style={{ display: "flex", flexWrap: "wrap" }}>
-                                                {tags.map((tag) => (
+                                                {tagsFromAPI.map((tag: any) => (
                                                     <button
                                                         key={tag}
                                                         type="button"
@@ -431,7 +486,6 @@ function Index() {
                                                     className="form-control" // Bootstrap form control class
                                                 />
                                             </div>
-
                                         </div>
                                     </Col>
                                 </Row>
@@ -449,8 +503,8 @@ function Index() {
                             <thead>
                                 <tr>
                                     <th>Name</th>
+                                    <th>Schedule</th>
                                     <th>Category</th>
-                                    <th>Phone</th>
                                     <th>Call</th>
                                 </tr>
                             </thead>
@@ -483,23 +537,58 @@ function Index() {
                                                     }
                                                     return true;
                                                 })
-                                                .map((lead) => (
-                                                    <tr key={lead.id} className={activeRow === lead.id ? 'active-row' : ''}>
-                                                        <td style={{ textTransform: "capitalize", cursor: "pointer" }} onClick={() => {
-                                                            fetchLeadById(lead.id);
-                                                            setActiveRow(lead.id === activeRow ? null : lead.id);
-                                                        }}>
-                                                            <a style={{ color: "blue" }}>{lead.name} - {convertToIST(lead.created_at)}</a>
-                                                        </td>
-                                                        <td>{lead.category}</td>
-                                                        <td>{lead.phone}</td>
-                                                        <td>
-                                                            <button className="call-button" onClick={() => handleCall(lead.phone)} data-tel={lead.phone}>
-                                                                Call
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))
+                                                .map((lead) => {
+                                                    // Parse the scheduled date using moment.js
+                                                    const scheduledDate = moment(lead.date_shedule, "DD/MMM/YYYY h:mmA");
+
+                                                    // Check if the parsed date is valid
+                                                    if (!scheduledDate.isValid()) {
+                                                        return (
+                                                            <tr key={lead.id}>
+                                                                <td>Invalid scheduled date</td>
+                                                            </tr>
+                                                        );
+                                                    }
+
+                                                    // Calculate the time difference
+                                                    const currentDate = moment();
+                                                    const timeDiff = moment.duration(currentDate.diff(scheduledDate));
+
+                                                    // Format the time difference
+                                                    let timeDiffString;
+                                                    if (timeDiff.asHours() < 1) {
+                                                        const minutesDiff = Math.floor(timeDiff.asMinutes());
+                                                        timeDiffString = `${minutesDiff} minutes`;
+                                                    } else if (timeDiff.asHours() < 24) {
+                                                        const hoursDiff = Math.floor(timeDiff.asHours());
+                                                        const minutesDiff = Math.floor(timeDiff.asMinutes()) % 60;
+                                                        timeDiffString = `${hoursDiff} hours ${minutesDiff} minutes`;
+                                                    } else {
+                                                        const daysDiff = Math.floor(timeDiff.asDays());
+                                                        timeDiffString = `${daysDiff} days`;
+                                                    }
+
+                                                    return (
+                                                        <tr key={lead.id} className={activeRow === lead.id ? 'active-row' : ''}>
+                                                            <td style={{ textTransform: "capitalize", cursor: "pointer" }} onClick={() => {
+                                                                fetchLeadById(lead.id);
+                                                                setActiveRow(lead.id === activeRow ? null : lead.id);
+                                                            }}>
+                                                                 {/* - {convertToIST(lead.created_at)} */}
+                                                                <a style={{ color: "blue" }}>{lead.name}</a>
+                                                            </td>
+                                                            <td>{timeDiffString} ago</td>
+                                                            <td>{lead.category}</td>
+                                                            {/* <td>{lead.phone}</td> */}
+
+                                                            <td>
+                                                                <button className="call-button" onClick={() => handleCall(lead.phone)} data-tel={lead.phone}>
+                                                                    Call
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
                                         ) : (
                                             <tr>
                                                 <td colSpan={4}>No leads available</td>
@@ -532,23 +621,7 @@ function Index() {
                                             <tr>
                                                 <td><strong>Email:</strong></td>
                                                 <td>{perLead?.email}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Call Time:</strong></td>
-                                                <td>{convertToIST(perLead?.created_at)}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Address:</strong></td>
-                                                <td>{perLead?.address}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Comment:</strong></td>
-                                                <td>{perLead?.comment}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Tag:</strong></td>
-                                                <td>{perLead?.tags}</td>
-                                            </tr>
+                                            </tr>                                       
                                         </tbody>
                                     </Table>
                                 </Col>
@@ -557,28 +630,12 @@ function Index() {
                                     <Table striped bordered hover>
                                         <tbody>
                                             <tr>
-                                                <td><strong>Platform:</strong></td>
-                                                <td>{perLead?.platform}</td>
+                                                <td><strong>Tag:</strong></td>
+                                                <td>{perLead?.tags}</td>
                                             </tr>
                                             <tr>
-                                                <td><strong>Website Details:</strong></td>
-                                                <td>{perLead?.websiteDetails}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Project Details:</strong></td>
-                                                <td>{perLead?.projectDetails}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Interested Services:</strong></td>
-                                                <td>{perLead?.interestedServices}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Services Taken:</strong></td>
-                                                <td>{perLead?.comment}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Lead Group:</strong></td>
-                                                <td>{perLead?.group}</td>
+                                                <td><strong>Call Time:</strong></td>
+                                                <td>{convertToIST(perLead?.created_at)}</td>
                                             </tr>
                                         </tbody>
                                     </Table>
@@ -613,7 +670,7 @@ function Index() {
                                         <strong>Tags:</strong>
 
                                         <div className="btn-group" style={{ display: "flex", flexWrap: "wrap" }}>
-                                            {tags.map((tag) => (
+                                            {tagsFromAPI.map((tag) => (
                                                 <button
                                                     key={tag}
                                                     type="button"
@@ -626,6 +683,18 @@ function Index() {
                                                 </button>
                                             ))}
                                         </div>
+
+                                        {/* <div>
+                                            <ReactTags
+                                                tags={tags}
+                                                handleDelete={handleDelete}
+                                                handleAddition={handleAddition}
+                                                handleDrag={handleDrag}
+                                                handleTagClick={handleTagClick}
+                                                inputFieldPosition="bottom"
+                                                autocomplete
+                                            />
+                                        </div> */}
 
 
                                         <br></br>
@@ -694,7 +763,7 @@ function Index() {
                             {selectedTime ? (
                                 <Row style={{ marginTop: '15px', }}>
                                     <Col>
-                                        <div >
+                                        <div>
                                             <p style={{ color: 'blue' }}>Selected Time: {selectedTime}</p>
                                         </div>
                                     </Col>
@@ -710,7 +779,6 @@ function Index() {
                                     <Toaster />
                                 </Col>
                             </Row>
-
 
                         </div>
                     ) :

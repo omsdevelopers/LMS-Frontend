@@ -18,7 +18,7 @@ interface FormData {
 }
 
 const api = axios.create({
-  baseURL: "https://transindiapacker.com/public/api",
+  baseURL: "http://leadmanagement.test/api",
 });
 
 export const leadGeneration = async (formData: FormData): Promise<any> => {
@@ -176,6 +176,16 @@ export const leadByID = async (id: number | undefined) => {
   }
 };
 
+export const everyLeadByID = async (id: number | undefined) => {
+  try {
+    const { data } = await api.get(`/everysingleleads/${id}`);
+
+    return data.leads;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const scheduleLeadByID = async (id: number | undefined) => {
   try {
     const { data } = await api.get(`/sheduledsingleleads/${id}`);
@@ -188,10 +198,16 @@ export const scheduleLeadByID = async (id: number | undefined) => {
 
 export const commands = async (payload: Record<string, any>) => {
   try {
+    const userString:any = localStorage.getItem('user');
+
+    const user = JSON.parse(userString);
+    const userId = user.id; 
+
     const { data } = await api.post("/comments", {
       lead_id: payload.id,
       comment: payload.comment,
       postedOn: payload.postedOn,
+      userId
     });
 
     return data.comments;
@@ -215,10 +231,16 @@ export const leadSchedule = async (
   selectedTime: string
 ) => {
   try {
+    const userString:any = localStorage.getItem('user');
+
+    const user = JSON.parse(userString);
+    const userId = user.id; 
+
     const { data } = await api.get(`/date_shedule/${id}`, {
       params: {
         is_shedule: 1,
         date_shedule: selectedTime,
+        userId
       },
     });
 
@@ -239,8 +261,15 @@ export const leadCategoryUpdate = async (
   category: string
 ) => {
   try {
+
+    const userString:any = localStorage.getItem('user');
+
+    const user = JSON.parse(userString);
+    const userId = user.id; 
+
     const { data } = await api.post(`/lead_category/${id}`, {
       category,
+      userId
     });
 
     return data.message;
@@ -265,7 +294,7 @@ export const scheduledLeads = async (
       params: {
         category,
         date: date,
-        tags
+        tags,
       },
     });
     return data;
@@ -274,9 +303,85 @@ export const scheduledLeads = async (
   }
 };
 
-export const leadTagUpdate = async (id: number | undefined, tags: string[]) => {
+export const leadTagUpdate = async (id: any | undefined, tags: string[]) => {
   try {
+    const userString:any = localStorage.getItem('user');
+
+    const user = JSON.parse(userString);
+    const userId = user.id; 
+
     const { data } = await api.post(`/tagcreate/${id}`, {
+      tags,
+      userId
+    });
+
+    return data.message;
+  } catch (error) {
+    const axiosError = error as AxiosError;
+
+    if (axios.isAxiosError(error)) {
+      if (axiosError.response) {
+        throw axiosError.response.data.error;
+      }
+    }
+  }
+};
+
+export const everyLeads = async (
+  category?: string[],
+  date?: any,
+  tags?: string[]
+) => {
+  try {
+    const { data } = await api.get(`/every-leads`, {
+      params: {
+        category,
+        date: date,
+        tags,
+      },
+    });
+
+    return data;
+  } catch (error) {
+    const axiosError = error as AxiosError;
+
+    if (axios.isAxiosError(error)) {
+      if (axiosError.response) {
+        throw axiosError.response.data.error;
+      }
+    }
+  }
+};
+
+export const getTags = async (formatted?: number) => {
+  try {
+    const { data } = await api.get(`/get-tags`, {
+      params: {
+        formatted,
+      },
+    });;
+
+    return data;
+  } catch (error) {
+    const axiosError = error as AxiosError;
+
+    if (axios.isAxiosError(error)) {
+      if (axiosError.response) {
+        throw axiosError.response.data.error;
+      }
+    }
+  }
+};
+
+export const createGroup = async (
+  title: string,
+  category: string[],
+  tags: string[]
+) => {
+  try {
+    const { data } = await api.post(`/group-create`, {
+      title,
+      category,
       tags,
     });
 
@@ -289,5 +394,77 @@ export const leadTagUpdate = async (id: number | undefined, tags: string[]) => {
         throw axiosError.response.data.error;
       }
     }
+  }
+};
+
+export const getGroups = async () => {
+  try {
+    const { data } = await api.get(`/group-get`);
+
+    return data;
+  } catch (error) {
+    const axiosError = error as AxiosError;
+
+    if (axios.isAxiosError(error)) {
+      if (axiosError.response) {
+        throw axiosError.response.data.error;
+      }
+    }
+  }
+};
+
+export const groupDelete = async (id: number) => {
+  try {
+    const { data } = await api.delete(`/group-delete/${id}`);
+
+    return data.message;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getLeadByGroup = async (id: any) => {
+  try {
+    const { data } = await api.get(`/groupLeadsById/${id}`);
+
+    return data.leads;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const saveTags = async (tags: string) => {
+  try {
+    const { data } = await api.post(`/save-tags`, {
+      tags,
+    });
+
+    return data.message;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const tagDelete = async (id: number) => {
+  try {
+    const { data } = await api.delete(`/tag-delete/${id}`);
+
+    return data.message;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getActivity = async (date: string) => {
+  try {
+    const { data } = await api.get(`/log-activity`,{
+      params: {
+        date,
+      },
+    });
+
+    return data.activity;
+  } catch (error) {
+    throw error;
   }
 };

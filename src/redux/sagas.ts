@@ -7,6 +7,7 @@ import {
   watchFetchScheduleLeadCount,
   watchScheduleFetchLeads,
 } from "./scheduleLeads/saga";
+import {watchFetchEveryLeadCount, watchFetchEveryLeads} from "./allLeads/saga"
 
 export default function* rootSaga() {
   yield all([
@@ -15,6 +16,8 @@ export default function* rootSaga() {
     watchFetchLeadCount(),
     watchFetchLeads(),
     watchFetchScheduleLeadCount(),
-    watchScheduleFetchLeads()
+    watchScheduleFetchLeads(),
+    watchFetchEveryLeadCount(),
+    watchFetchEveryLeads()
   ]);
 }

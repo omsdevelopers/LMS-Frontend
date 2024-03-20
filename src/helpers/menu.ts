@@ -5,7 +5,8 @@ import {
   MenuItemTypes,
 } from "../constants/menu";
 
-const getMenuItems = (leadCount: string, ScheduleCount: string) => {
+const getMenuItems = (leadCount: string, ScheduleCount: string, everyLeadsCount: string) => {
+
   return MENU_ITEMS.map((item) => {
     if (item.key === "apps-today-leads") {
       return {
@@ -20,6 +21,14 @@ const getMenuItems = (leadCount: string, ScheduleCount: string) => {
         badge: { variant: "success", text: ScheduleCount },
       };
     }
+    
+    if (item.key === "apps-all-leads") {
+      return {
+        ...item,
+        badge: { variant: "success", text: everyLeadsCount  },
+      };
+    }
+    
     return item;
   });
 };

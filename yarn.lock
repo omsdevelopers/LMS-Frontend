@@ -1816,6 +1816,18 @@
     "@svgr/plugin-svgo" "^5.5.0"
     "loader-utils" "^2.0.0"
 
+"@tanstack/query-core@5.25.0":
+  "integrity" "sha512-vlobHP64HTuSE68lWF1mEhwSRC5Q7gaT+a/m9S+ItuN+ruSOxe1rFnR9j0ACWQ314BPhBEVKfBQ6mHL0OWfdbQ=="
+  "resolved" "https://registry.npmjs.org/@tanstack/query-core/-/query-core-5.25.0.tgz"
+  "version" "5.25.0"
+
+"@tanstack/react-query@^5.25.0":
+  "integrity" "sha512-u+n5R7mLO7RmeiIonpaCRVXNRWtZEef/aVZ/XGWRPa7trBIvGtzlfo0Ah7ZtnTYfrKEVwnZ/tzRCBcoiqJ/tFw=="
+  "resolved" "https://registry.npmjs.org/@tanstack/react-query/-/react-query-5.25.0.tgz"
+  "version" "5.25.0"
+  dependencies:
+    "@tanstack/query-core" "5.25.0"
+
 "@testing-library/dom@^7.28.1":
   "integrity" "sha512-3UqjCpey6HiTZT92vODYLPxTBWlM8ZOOjr3LX5F37/VRipW2M1kX6I/Cm4VXzteZqfGfagg8yXywpcOgQBlNsQ=="
   "resolved" "https://registry.npmjs.org/@testing-library/dom/-/dom-7.31.2.tgz"
@@ -10775,10 +10787,10 @@
   "resolved" "https://registry.npmjs.org/react-tag-autocomplete/-/react-tag-autocomplete-7.1.0.tgz"
   "version" "7.1.0"
 
-"react-tag-input@^6.8.1":
-  "integrity" "sha512-eD8SCFVMGbnDP0qnlpMnalw6POJVnkOh0M7FhuVyR3u/Mf+lgAuvl+GbrtGaFZcw3qz2sWo6j3jrrHUV2gO6Cg=="
-  "resolved" "https://registry.npmjs.org/react-tag-input/-/react-tag-input-6.8.1.tgz"
-  "version" "6.8.1"
+"react-tag-input@^6.9.0":
+  "integrity" "sha512-pVSjhlYkz9HJifGLDe8wIiZ8DMSwSlL0L14vhsVrgDcMyIQdbCKNuiWHdh61DkjLKNYpAoM5MjTuAgJXOXM+vg=="
+  "resolved" "https://registry.npmjs.org/react-tag-input/-/react-tag-input-6.9.0.tgz"
+  "version" "6.9.0"
   dependencies:
     "classnames" "~2.3.1"
     "lodash" "~4.17.12"

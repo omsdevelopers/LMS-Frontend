@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import SplitPane from "react-split-pane";
 import "../SplitPane/style.css";
-import { listLeads, leadByID, leadSchedule, leadCategoryUpdate, leadCount, scheduleLeadByID, leadTagUpdate, getTags } from '../../../../helpers/api/api';
+import { listLeads, leadByID, leadSchedule, leadCategoryUpdate, leadCount, scheduleLeadByID, leadTagUpdate, getTags, everyLeadByID } from '../../../../helpers/api/api';
 import { Table, Row, Col, Form, Button, Offcanvas } from 'react-bootstrap';
 import Lottie from 'react-lottie-player'
 import lottieJson from '../SplitPane/JSON/empty.json'
@@ -18,6 +18,7 @@ import LeadsActionTypes from '../../../../redux/scheduleLeads/constants';
 import { CountdownCircleTimer } from 'react-countdown-circle-timer'
 import Skeleton from 'react-loading-skeleton'
 import { WithContext as ReactTags } from 'react-tag-input';
+import { useParams } from 'react-router-dom';
 
 interface Comment {
     id: number;
@@ -64,8 +65,15 @@ interface Props {
     perLead: Lead | null;
 }
 
+interface RouteParams {
+    id: string;
+};
+
+
 function Index() {
     const dispatch = useDispatch();
+    const { id } = useParams<RouteParams>();
+
 
     const [leftPanelWidth, setLeftPanelWidth] = useState(33.33);
     const [leads, setLeads] = useState<any[]>();
@@ -88,32 +96,6 @@ function Index() {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
     };
-
-    const Reduxleads = useSelector((state: RootState) => state.leadsScheduleReducer?.leads);
-
-    const reduxloading = useSelector((state: RootState) => state.leadsScheduleReducer?.loading);
-
-    const listAll = async () => {
-        try {
-            setLoading(true)
-            dispatch({ type: LeadsActionTypes.SET_SCHEDULE_LEAD });
-            await dispatch(fetchScheduleLeads());
-            await dispatch(fetchEveryLeadCount());
-
-            setLoading(false)
-        } catch (e) {
-            console.log(e)
-            setLoading(false)
-        }
-    }
-
-    useEffect(() => {
-        listAll()
-    }, [dispatch])
-
-    useEffect(() => {
-        setLeads(Reduxleads);
-    }, [Reduxleads]);
 
     const refresh = async () => {
         try {
@@ -142,14 +124,18 @@ function Index() {
     };
 
 
-    const fetchLeadById = async (id: number) => {
+    const fetchLeadById = async (id: any) => {
         try {
-            const data = await scheduleLeadByID(id);
+            const data = await everyLeadByID(id);
             setPerLead(data)
         } catch (e) {
             console.log(e)
         }
     }
+
+    useEffect(() => {
+        fetchLeadById(id)
+    }, [id])
 
 
 
@@ -165,7 +151,6 @@ function Index() {
         setSelectedCategory(category);
         try {
             const data = await leadCategoryUpdate(perLead?.id, category)
-            listAll()
             toast.success(data);
         } catch (error: any) {
             console.log(error)
@@ -189,7 +174,6 @@ function Index() {
 
         try {
             const data = await leadTagUpdate(perLead?.id, updatedTags)
-            listAll()
             toast.success(data);
         } catch (error: any) {
             console.log(error)
@@ -250,7 +234,6 @@ function Index() {
 
         try {
             await leadTagUpdate(perLead?.id, updatedTags.map(tag => tag.text));
-            listAll();
             AllTags();
             toast.success('Tag added successfully');
         } catch (error) {
@@ -443,120 +426,10 @@ function Index() {
                 <div className="panel-content" style={{ overflowY: 'auto' }}>
                     <div className="table-container">
 
-                        <Form>
-                            <Row className="mb-3">
-                                <Col>
-                                    <Form.Group controlId="formName">
-                                        {/* <Form.Label>Search by Name:</Form.Label> */}
-                                        <Form.Control
-                                            type="text"
-                                            placeholder="Enter name or phone"
-                                            value={searchName}
-                                            onChange={(e) => setSearchName(e.target.value)}
-                                        />
-                                    </Form.Group>
-                                </Col>
-                                <Col>
-                                    <Form.Group controlId="formDate">
-                                        {/* <Form.Label>Search by Date:</Form.Label> */}
-                                        <Form.Control
-                                            type="date"
-                                            value={searchDate}
-                                            onChange={(e) => setSearchDate(e.target.value)}
-                                        />
-                                    </Form.Group>
-                                </Col>
-                                <Col>
-                                    <FeatherIcon onClick={refresh} icon='refresh-ccw' className="icon-dual icon-xs me-1" style={{ marginTop: "10px", cursor: "pointer" }} />
-                                </Col>
-                                <Col>
-                                    <Button className={``} variant="outline-primary" onClick={toggle} style={{ marginBottom: '3px', float: "right" }}>
-                                        <FeatherIcon icon='filter' className="icon-dual icon-xs me-1" /> Filter
-                                    </Button>
-                                </Col>
-                            </Row>
-                        </Form>
-
-                        <Offcanvas show={show} onHide={toggle} placement="end" >
-                            <Offcanvas.Header closeButton>
-                                <h5 id="offcanvasTopLabel">Filter</h5>
-                            </Offcanvas.Header>
-                            <Offcanvas.Body>
-                                <Row>
-                                    <Col>
-                                        <div>
-                                            <strong>Category:</strong>
-                                            <div className="btn-group" style={{ display: "flex", flexWrap: "wrap" }}>
-                                                {categories.map((category) => (
-                                                    <button
-                                                        key={category}
-                                                        type="button"
-                                                        className={`btn ${selectedFilterCategory.includes(category) ? 'btn-success' : 'btn-primary'} btn-sm`}
-                                                        onClick={() => handleFilterCategory(category)}
-                                                        style={{ margin: '5px' }}
-                                                    >
-                                                        {category}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            <br></br>
-                                        </div>
-                                    </Col>
-                                </Row>
-
-                                <Row>
-                                    <Col>
-                                        <div>
-                                            <strong>Tags:</strong>
-                                            <div className="btn-group" style={{ display: "flex", flexWrap: "wrap" }}>
-                                                {tagsFromAPI.map((tag: any) => (
-                                                    <button
-                                                        key={tag}
-                                                        type="button"
-                                                        className={`btn ${selectedFilerTags.includes(tag) ? 'btn-success' : 'btn-primary'} btn-sm`}
-                                                        onClick={() => handleFilterTags(tag)}
-                                                        style={{ margin: '5px' }}
-                                                    >
-                                                        {tag}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            <br></br>
-                                        </div>
-                                    </Col>
-                                </Row>
-
-                                <Row>
-                                    <Col>
-                                        <div>
-                                            <strong>Date:</strong>
-                                            <div >
-                                                <DatePicker
-                                                    selected={selectedDate ? new Date(selectedDate) : null}
-                                                    onChange={handleDateChange}
-                                                    dateFormat="dd/MM/yyyy" // Adjust the date format as needed
-                                                    isClearable
-                                                    className="form-control" // Bootstrap form control class
-                                                />
-                                            </div>
-
-                                        </div>
-                                    </Col>
-                                </Row>
-
-                                <Row>
-                                    <Col>
-                                        <Button style={{ marginTop: '25px', width: "100%" }} onClick={handleFilter}>Submit</Button>
-                                    </Col>
-                                </Row>
-                            </Offcanvas.Body>
-                        </Offcanvas>
-
                         <table className="styled-table">
                             <thead>
                                 <tr>
                                     <th>Name</th>
-                                    <th>Time</th>
                                     <th>Category</th>
                                     <th>Call</th>
                                 </tr>
@@ -570,62 +443,22 @@ function Index() {
                                     </>
                                 ) : (
                                     <>
-                                        {leads && leads.length > 0 ? (
-                                            leads
-                                                .filter((lead) => {
-                                                    const lowerCaseSearch = searchName.toLowerCase();
-                                                    return (
-                                                        lead.name.toLowerCase().includes(lowerCaseSearch) ||
-                                                        lead.phone.includes(lowerCaseSearch)
-                                                    );
-                                                })
-                                                .filter((lead) => {
-                                                    if (searchDate) {
-                                                        const leadDate = new Date(lead.created_at).toISOString().split('T')[0];
-                                                        return leadDate === searchDate;
-                                                    }
-                                                    return true;
-                                                })
-                                                .map((lead, index) => {
-                                                    const remainingTime: any = remainingTimes && remainingTimes[index];
 
-                                                    // if (!remainingTime) {
-                                                    //     return null
-                                                    // }
+                                        <tr>
+                                            <td style={{ textTransform: "capitalize", cursor: "pointer" }}>
+                                                {/* - {convertToIST(lead.created_at)} */}
+                                                <a style={{ color: "blue" }}>{perLead?.name}</a>
+                                            </td>
 
-                                                    return (
-                                                        <tr key={lead.id} className={activeRow === lead.id ? 'active-row' : ''}>
-                                                            <td style={{ textTransform: "capitalize", cursor: "pointer" }}
-                                                                onClick={() => {
-                                                                    fetchLeadById(lead.id);
-                                                                    setActiveRow(lead.id === activeRow ? null : lead.id);
-                                                                }}
-                                                            >
-                                                                <a style={{ color: "blue" }}>{lead.name} - {convertToIST(lead.created_at)}</a>
-                                                            </td>
-                                                            <td style={{ color: "red" }}>
-                                                                {remainingTime ? (
-                                                                    <>
-                                                                        {remainingTime.hours} h {remainingTime.minutes} m {remainingTime.seconds} s left
-                                                                    </>
-                                                                ) : (
-                                                                    <Skeleton />
-                                                                )}
-                                                            </td>
-                                                            <td>{lead.category}</td>
-                                                            <td>
-                                                                <button className="call-button" onClick={() => handleCall(lead.phone)}>
-                                                                    Call
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })
-                                        ) : (
-                                            <tr>
-                                                <td colSpan={3}>No leads available</td>
-                                            </tr>
-                                        )}
+                                            <td>{perLead?.category}</td>
+                                            {/* <td>{lead.phone}</td> */}
+
+                                            <td>
+                                                <button className="call-button" onClick={() => handleCall(perLead?.phone)} data-tel={perLead?.phone}>
+                                                    Call
+                                                </button>
+                                            </td>
+                                        </tr>
                                     </>
                                 )
                                 }

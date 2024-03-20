@@ -5,6 +5,7 @@ import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
+import { format, isValid } from 'date-fns';
 
 //components
 import { FormInput } from '../../../../components';
@@ -27,7 +28,7 @@ const ChatItemAvatar = ({ userAvatar, postedOn }: { userAvatar: string; postedOn
 };
 
 /* Chat Item Text */
-const ChatItemText = ({ userName, text }: { userName: string; text: string }) => {
+const ChatItemText:any = ({ userName, text }: { userName: string; text: string }) => {
     return (
         <>
             <div className="conversation-text">
@@ -186,6 +187,14 @@ const ChatList = (props: ChatListProps) => {
         }
     };
 
+    const groupedMessages: Record<string, any[]> = comments.reduce((acc: any, message: any) => {
+        const date = isValid(new Date(message?.created_at)) ? format(new Date(message?.created_at), 'MMMM dd, yyyy') : format(new Date(), 'MMMM dd, yyyy');
+        acc[date] = acc[date] || [];
+        acc[date].push(message);
+        return acc;
+    }, {});
+
+
     return (
         <>
             <Card>
@@ -213,20 +222,25 @@ const ChatList = (props: ChatListProps) => {
                     <div className="chat-conversation">
                         {/* chat messages */}
                         <Scrollbar style={{ height: '514px', width: '100%' }}>
-                            <ul className={classNames('conversation-list', props.className)}>
-                                {comments && comments.length > 0 ? (
-                                    comments.map((message, i) => (
-                                        <ChatItem key={i} placement={message.userName === 'Dominic' ? 'right' : 'right'}>
-                                            {message.userPic && (
-                                                <ChatItemAvatar userAvatar={message.userPic} postedOn={message.postedOn} />
-                                            )}
-                                            <ChatItemText userName={message.userName} text={message.comment} />
-                                        </ChatItem>
-                                    ))
-                                ) : (
-                                    <div>No data found</div>
-                                )}
-                            </ul>
+                            {Object.entries(groupedMessages).map(([date, messages]) => (
+                                <React.Fragment key={date}>
+
+                                    <div className="date-divider" style={{ textAlign: 'center' }}>
+                                        {date}
+                                    </div>
+
+                                    <ul className={classNames('conversation-list')}>
+                                        {messages.map((message, i) => (
+                                            <ChatItem key={i} >
+                                                {message.userPic && (
+                                                    <ChatItemAvatar userAvatar={message.userPic} postedOn={message.postedOn} />
+                                                )}
+                                                <ChatItemText userName={message.userName} text={message.comment} />
+                                            </ChatItem>
+                                        ))}
+                                    </ul>
+                                </React.Fragment>
+                            ))}
                         </Scrollbar>
 
                         {/* chat form */}

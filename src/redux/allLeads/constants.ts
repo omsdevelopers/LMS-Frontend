@@ -1,0 +1,13 @@
+// constants/leads.js
+
+export const LeadsActionTypes = {
+    SET_EVERY_LEAD_COUNT: "SET_EVERY_LEAD_COUNT",
+    FETCH_EVERY_LEAD_COUNT: "FETCH_EVERY_LEAD_COUNT",
+    SET_LEAD: "SET_LEAD",
+    FETCHEVERY_LEAD: "FETCHEVERY_LEAD",
+    FETCH_LEAD_SUCCESS: "FETCH_LEAD_SUCCESS",
+    FETCH_LEAD_FAILURE: "FETCH_LEAD_FAILURE"
+  };
+  
+  export default LeadsActionTypes;
+  

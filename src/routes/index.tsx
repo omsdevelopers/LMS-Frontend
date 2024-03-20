@@ -27,6 +27,12 @@ const AddLeads = React.lazy(() => import('../pages/apps/Leads/'));
 const TodayLeads = React.lazy(() => import('../pages/apps/Leads/TodayLeads/'));
 const SplitPane = React.lazy(() => import('../pages/apps/Leads/SplitPane/'));
 const ScheduleLeads = React.lazy(() => import('../pages/apps/Leads/ScheduleLeads/'));
+const GroupLeads = React.lazy(() => import('../pages/apps/Leads/GroupedLeads/'));
+const GroupByLeads = React.lazy(() => import('../pages/apps/Leads/LeadsByGroup/'));
+const AllLeads = React.lazy(() => import('../pages/apps/Leads/AllLeads/'));
+const CreateTags = React.lazy(() => import('../pages/apps/Leads/CreateTags/'));
+const LeadActivity = React.lazy(() => import('../pages/apps/Leads/LeadActivity/'));
+const SingleLead = React.lazy(() => import('../pages/apps/Leads/SingleLead/'));
 const CalendarApp = React.lazy(() => import('../pages/apps/Calendar/'));
 const Projects = React.lazy(() => import('../pages/apps/Projects/'));
 const ProjectDetail = React.lazy(() => import('../pages/apps/Projects/Detail/'));
@@ -175,6 +181,66 @@ const scheduleLeadsAppRoutes: RoutesProps = {
     header: 'Apps',
 }
 
+const allLeadsAppRoutes: RoutesProps = {
+    path: '/apps/all-leads',
+    name: 'All Leads',
+    route: PrivateRoute,
+    roles: ['Admin'],
+    icon: 'calendar',
+    component: AllLeads,
+    header: 'Apps',
+}
+
+const groupLeadsAppRoutes: RoutesProps = {
+    path: '/apps/group-leads',
+    name: 'All Leads',
+    route: PrivateRoute,
+    roles: ['Admin'],
+    icon: 'calendar',
+    component: GroupLeads,
+    header: 'Apps',
+}
+
+const groupByLeadsAppRoutes: RoutesProps = {
+    path: '/apps/grouped-leads/:id', // Add the id parameter to the path
+    name: 'All Leads',
+    route: PrivateRoute,
+    roles: ['Admin'],
+    icon: 'calendar',
+    component: GroupByLeads,
+    header: 'Apps',
+};
+
+const createTagsAppRoutes: RoutesProps = {
+    path: '/apps/create-tags', 
+    name: 'All Leads',
+    route: PrivateRoute,
+    roles: ['Admin'],
+    icon: 'calendar',
+    component: CreateTags,
+    header: 'Apps',
+};
+
+const leadActivityAppRoutes: RoutesProps = {
+    path: '/apps/activity', 
+    name: 'All Leads',
+    route: PrivateRoute,
+    roles: ['Admin'],
+    icon: 'calendar',
+    component: LeadActivity,
+    header: 'Apps',
+};
+
+const singleLeadsAppRoutes: RoutesProps = {
+    path: '/apps/activity-leads/:id', // Add the id parameter to the path
+    name: 'All Leads',
+    route: PrivateRoute,
+    roles: ['Admin'],
+    icon: 'calendar',
+    component: SingleLead,
+    header: 'Apps',
+};
+
 const chatAppRoutes: RoutesProps = {
     path: '/apps/chat',
     name: 'Chat',
@@ -266,7 +332,7 @@ const fileAppRoutes: RoutesProps = {
     component: FileManager,
 };
 
-const appRoutes = [calendarAppRoutes, chatAppRoutes, emailAppRoutes, projectAppRoutes, taskAppRoutes, fileAppRoutes, leadAppRoutes, todayLeadAppRoutes, leadSplitPaneAppRoutes, scheduleLeadsAppRoutes];
+const appRoutes = [calendarAppRoutes, chatAppRoutes, emailAppRoutes, projectAppRoutes, taskAppRoutes, fileAppRoutes, leadAppRoutes, todayLeadAppRoutes, leadSplitPaneAppRoutes, scheduleLeadsAppRoutes, allLeadsAppRoutes, groupLeadsAppRoutes, groupByLeadsAppRoutes, createTagsAppRoutes, leadActivityAppRoutes, singleLeadsAppRoutes];
 
 // pages
 const extrapagesRoutes: RoutesProps = {
@@ -506,6 +572,11 @@ const otherPublicRoutes: RoutesProps[] = [
     },
 ];
 
+const roles = [
+    {
+        roles:["admin", "telecaller"]
+    }
+]
 // flatten the list of all nested routes
 const flattenRoutes = (routes: RoutesProps[]) => {
     let flatRoutes: RoutesProps[] = [];
@@ -527,4 +598,6 @@ const publicRoutes = [...authRoutes, ...otherPublicRoutes];
 
 const authProtectedFlattenRoutes = flattenRoutes([...authProtectedRoutes]);
 const publicProtectedFlattenRoutes = flattenRoutes([...publicRoutes]);
+
+console.log("routes", authProtectedFlattenRoutes)
 export { publicRoutes, authProtectedRoutes, authProtectedFlattenRoutes, publicProtectedFlattenRoutes };
